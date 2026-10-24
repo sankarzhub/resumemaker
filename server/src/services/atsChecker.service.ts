@@ -29,7 +29,7 @@ export const WEIGHTS = {
   parsing: 15,
 } as const;
 
-export const DISCLAIMER =
+const DISCLAIMER =
   'This is an estimated quality score based on transparent rules. It is not a real employer ATS score and cannot predict hiring decisions.';
 
 export const ACTION_VERBS = new Set(
@@ -66,7 +66,7 @@ function deduct(c: CategoryResult, points: number, reason: string) {
   c.reasons.push(reason);
 }
 
-export function allBullets(r: ResumeContent): string[] {
+function allBullets(r: ResumeContent): string[] {
   return [...r.experience.flatMap((e) => e.description), ...r.projects.flatMap((p) => p.description)]
     .map((b) => b.trim())
     .filter(Boolean);

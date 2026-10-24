@@ -1,6 +1,6 @@
 export type TemplateId = 'classic' | 'modern' | 'compact' | 'executive' | 'minimal' | 'bold'
 
-/** Mirrors TEMPLATE_INFO in server/src/services/export.service.ts. */
+/** Template ids match TEMPLATE_IDS in server/src/services/export.service.ts. */
 export const TEMPLATES: Array<{ id: TemplateId; label: string; description: string }> = [
   { id: 'classic', label: 'Classic', description: 'Lato, centered header, hairline rules. Safe for any role.' },
   { id: 'modern', label: 'Modern', description: 'Inter with blue accents, left-aligned. Clean and contemporary.' },

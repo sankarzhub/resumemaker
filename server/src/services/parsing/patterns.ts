@@ -11,8 +11,8 @@ const DATE_TOKEN = `(?:${MONTH}\\s*,?\\s*${YEAR}|${MONTH}\\s*'\\d{2}(?!\\d)|(?:0
 const PRESENT = '(?:present|current(?:ly)?|now|today|till\\s+date|to\\s+date|ongoing|till\\s+now)';
 const RANGE_SEP = '\\s*(?:-|–|—|~|to|till|until|through)\\s*';
 
-export const DATE_RANGE_RE = new RegExp(`(?<![\\w/])(${DATE_TOKEN})${RANGE_SEP}(${DATE_TOKEN}|${PRESENT})(?![\\w/])`, 'i');
-export const SINGLE_DATE_RE = new RegExp(`(?<![\\w/.])(${DATE_TOKEN})(?![\\w/])`, 'i');
+const DATE_RANGE_RE = new RegExp(`(?<![\\w/])(${DATE_TOKEN})${RANGE_SEP}(${DATE_TOKEN}|${PRESENT})(?![\\w/])`, 'i');
+const SINGLE_DATE_RE = new RegExp(`(?<![\\w/.])(${DATE_TOKEN})(?![\\w/])`, 'i');
 const SINCE_RE = new RegExp(`\\b(?:since|from)\\s+(${DATE_TOKEN})(?![\\w/])`, 'i');
 
 /** Normalise any supported date token to "Mon YYYY", "YYYY" or "Present". Unknown input is returned trimmed. */

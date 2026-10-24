@@ -42,7 +42,7 @@ const RULES: Rule[] = [
 ];
 
 /** Strip icons, numbering and decoration; join letter-spaced headings ("E D U C A T I O N"). */
-export function cleanHeadingText(raw: string): string {
+function cleanHeadingText(raw: string): string {
   let t = stripIcons(raw)
     .replace(/^[#>*=_~|\-–—•·\d.)\s]+/, '')
     .replace(/[:|_=~\-–—•·]+\s*$/, '')
@@ -76,7 +76,7 @@ function unknownHeadingWords(text: string): number {
  * the head noun ("Academic Projects" → projects, "Career Objective" → summary); in a combined heading the
  * first one leads ("Skills & Certifications" → skills).
  */
-export function classifyHeading(text: string): SectionMatch | null {
+function classifyHeading(text: string): SectionMatch | null {
   const t = text.toLowerCase().replace(/&/g, ' and ').replace(/\s+/g, ' ').trim();
   const hits: Array<{ idx: number; rule: Rule; strong: boolean }> = [];
   for (const rule of RULES) {

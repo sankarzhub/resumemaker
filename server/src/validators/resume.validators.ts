@@ -8,7 +8,7 @@ const optText = (max: number) => z.string().trim().max(max).optional();
 const date = text(20);
 const list = (max: number, itemMax: number) => z.array(z.string().trim().max(itemMax)).max(max).default([]);
 
-export const resumeContentSchema = z.object({
+const resumeContentSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(120).optional(),
   templateId: z.enum(['classic', 'modern', 'compact', 'executive', 'minimal', 'bold']).optional(),
   fitToPage: z.boolean().optional(),

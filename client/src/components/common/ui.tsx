@@ -137,18 +137,6 @@ export function ProgressBar({ earned, max }: { earned: number; max: number }) {
   )
 }
 
-export function SectionTitle({ kicker, title, children }: { kicker?: string; title: string; children?: ReactNode }) {
-  return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-      <div>
-        {kicker && <span className="caption mb-2 text-xs">{kicker}</span>}
-        <h2 className="title-action text-3xl sm:text-4xl">{title}</h2>
-      </div>
-      {children}
-    </div>
-  )
-}
-
 export function Modal({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>

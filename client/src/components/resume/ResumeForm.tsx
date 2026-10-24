@@ -77,7 +77,7 @@ function EntryToolbar({ index, total, onMove, onRemove, label }: { index: number
 }
 
 /** Tag-style input: Enter or comma adds; paste of "a, b, c" adds all. */
-export function TagInput({ label, values, onChange, placeholder, path }: { label: string; values: string[]; onChange: (v: string[]) => void; placeholder?: string; path?: string }) {
+function TagInput({ label, values, onChange, placeholder, path }: { label: string; values: string[]; onChange: (v: string[]) => void; placeholder?: string; path?: string }) {
   const [draft, setDraft] = useState('')
   const add = (raw: string) => {
     const parts = raw.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean)

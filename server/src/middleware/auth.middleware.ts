@@ -3,9 +3,9 @@ import type { CookieOptions, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../utils/AppError.js';
 
-export const AUTH_COOKIE = 'rc_token';
-export const CSRF_COOKIE = 'rc_csrf';
-export const CSRF_HEADER = 'x-csrf-token';
+const AUTH_COOKIE = 'rc_token';
+const CSRF_COOKIE = 'rc_csrf';
+const CSRF_HEADER = 'x-csrf-token';
 const SESSION_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface AuthConfig {

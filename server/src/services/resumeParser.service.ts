@@ -82,7 +82,7 @@ function decodeText(buf: Buffer): string {
 const isHeadingLine = (l: DocLine) => detectHeading(l, {}) !== null;
 
 /** Extract layout-aware lines. PDFs keep font size/bold and are read column by column when needed. */
-export async function extractLines(buf: Buffer, kind: FileKind): Promise<{ lines: DocLine[]; columnPages?: number; pageCount?: number }> {
+async function extractLines(buf: Buffer, kind: FileKind): Promise<{ lines: DocLine[]; columnPages?: number; pageCount?: number }> {
   try {
     if (kind === 'pdf') {
       try {

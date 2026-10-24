@@ -168,7 +168,7 @@ function assignTitleCompany(headerLines: string[], linkedin: boolean): { jobTitl
 
 // ---------- Experience ----------
 
-export function parseExperience(lines: DocLine[], opts: StructureOptions): Experience[] {
+function parseExperience(lines: DocLine[], opts: StructureOptions): Experience[] {
   const ls = lines.map(classify).filter((c) => c.text);
   const anchors = ls.map((c, i) => (c.kind === 'date' ? i : -1)).filter((i) => i >= 0);
   const entries: Experience[] = [];
@@ -308,7 +308,7 @@ const GRADE_AFTER_RE = /(?<![\w.])(\d{1,3}(?:\.\d{1,2})?)\s*(%|\/\s*10\b|\/\s*4(
 const BOARD_RE = /^(state board|cbse|icse|igcse|ib|matriculation( board)?|board of [\w ]+|[\w ]*board)$/i;
 const TABLE_HEADER_RE = /^(degree|course|qualification|institution|institute|college|school|university|board|year|year of passing|passing year|percentage|cgpa|marks|grade|score|specialization|stream)(\s*[|/,]?\s*(degree|course|qualification|institution|institute|college|school|university|board|year|year of passing|passing year|percentage|cgpa|marks|grade|score|specialization|stream))*$/i;
 
-export function parseEducation(lines: DocLine[]): Education[] {
+function parseEducation(lines: DocLine[]): Education[] {
   const entries: Education[] = [];
   let cur: Education | null = null;
   const fresh = (): Education => ({ institution: '', degree: '', field: '', location: '', startDate: '', endDate: '', grade: '' });
@@ -410,7 +410,7 @@ export function parseEducation(lines: DocLine[]): Education[] {
 
 // ---------- Projects ----------
 
-export function parseProjects(lines: DocLine[]): Project[] {
+function parseProjects(lines: DocLine[]): Project[] {
   const ls = lines.map(classify).filter((c) => c.text);
   const projects: Project[] = [];
   let cur: Project | null = null;
@@ -487,7 +487,7 @@ export function parseProjects(lines: DocLine[]): Project[] {
 
 // ---------- Skills ----------
 
-export function parseSkills(lines: DocLine[]): { skills: string[]; languages: string[] } {
+function parseSkills(lines: DocLine[]): { skills: string[]; languages: string[] } {
   const skills: string[] = [];
   const languages: string[] = [];
   for (const raw of lines) {
@@ -521,7 +521,7 @@ export function parseSkills(lines: DocLine[]): { skills: string[]; languages: st
 
 // ---------- Certifications & additional sections ----------
 
-export function parseCertifications(lines: DocLine[], opts: StructureOptions = {}): ResumeContent['certifications'] {
+function parseCertifications(lines: DocLine[], opts: StructureOptions = {}): ResumeContent['certifications'] {
   const items: string[] = [];
   for (const raw of lines) {
     const c = classify(raw);

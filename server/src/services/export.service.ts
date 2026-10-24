@@ -29,7 +29,7 @@ import { woffToSfnt } from '../utils/woff.js';
  * that parsers ignore.
  */
 
-export const SECTION_TITLES = {
+const SECTION_TITLES = {
   summary: 'Professional Summary',
   skills: 'Skills',
   experience: 'Work Experience',
@@ -154,7 +154,7 @@ const BASE: TemplateStyle = {
   lineGap: 1.6,
 };
 
-export const TEMPLATES: Record<Template, TemplateStyle> = {
+const TEMPLATES: Record<Template, TemplateStyle> = {
   classic: BASE,
   modern: {
     ...BASE,
@@ -237,16 +237,6 @@ export const TEMPLATES: Record<Template, TemplateStyle> = {
   },
 };
 
-/** Labels for the template picker. */
-export const TEMPLATE_INFO: Record<Template, { label: string; description: string }> = {
-  classic: { label: 'Classic', description: 'Lato, centered header, hairline rules. Safe for any role.' },
-  modern: { label: 'Modern', description: 'Inter with blue accents, left-aligned. Clean and contemporary.' },
-  compact: { label: 'Compact', description: 'Tighter type and spacing. Fits more on one page.' },
-  executive: { label: 'Executive', description: 'Source Serif, centered headings, deep red accents. Formal.' },
-  minimal: { label: 'Minimal', description: 'Generous white space, quiet headings, no rules.' },
-  bold: { label: 'Bold', description: 'Teal header band and heading bars. Stands out, still ATS-safe.' },
-};
-
 // ---------- Shared helpers ----------
 
 function displayUrl(url: string) {
@@ -257,7 +247,7 @@ function hrefFor(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
 
-export function contactItems(r: ResumeContent): Array<{ text: string; href?: string }> {
+function contactItems(r: ResumeContent): Array<{ text: string; href?: string }> {
   const p = r.personalInfo;
   const items: Array<{ text: string; href?: string }> = [];
   if (p.location) items.push({ text: p.location });
@@ -333,7 +323,7 @@ interface Layout {
  * Lays out the resume at a type scale (f) and spacing scale (s). Returns the document unfinished so
  * measuring passes can skip serialisation; call `finish` to get the bytes.
  */
-export function layoutPdf(r: ResumeContent, template: Template, f: number, s: number): Layout {
+function layoutPdf(r: ResumeContent, template: Template, f: number, s: number): Layout {
   const st = TEMPLATES[template] ?? TEMPLATES.classic;
   const k = (n: number) => n * f;
   const sp = (n: number) => n * s;

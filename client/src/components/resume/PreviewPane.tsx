@@ -10,7 +10,7 @@ import { ResumePreview } from './ResumePreview'
 const DEBOUNCE_MS = 450
 
 /** Renders PDF bytes page by page onto canvases sized to the container, with page labels. */
-export function PdfPages({ data, pages }: { data: ArrayBuffer; pages: number }) {
+function PdfPages({ data, pages }: { data: ArrayBuffer; pages: number }) {
   const host = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [error, setError] = useState('')

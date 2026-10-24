@@ -83,7 +83,7 @@ function rowsOf(items: Item[], page: number): Row[] {
 }
 
 /** Widest x-band (in the middle 60% of the page) that almost no text crosses, with real text on both sides. */
-export function findGutter(items: Array<{ x: number; w: number }>, pageWidth: number): number | null {
+function findGutter(items: Array<{ x: number; w: number }>, pageWidth: number): number | null {
   const bins = new Array<number>(Math.ceil(pageWidth) + 2).fill(0);
   const narrow = items.filter((i) => i.w < pageWidth * 0.55);
   for (const it of narrow) {

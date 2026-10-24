@@ -99,7 +99,7 @@ const DEGREE_ALIASES: Record<string, string> = {
 };
 
 /** "B.E.", "BE", "Bachelor of Engineering", "Bachelor's of Engineering - BE" all normalise to "be". */
-export function normDegree(s: string): string {
+function normDegree(s: string): string {
   const k = s.toLowerCase().replace(/['’]s\b/g, '').replace(/\s*-\s*[a-z.]{1,7}$/i, '').replace(/[^a-z]/g, '');
   return DEGREE_ALIASES[k] ?? k;
 }

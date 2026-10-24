@@ -48,7 +48,7 @@ export function classifyJobSkills(jd: string): Map<string, Importance> {
   return result;
 }
 
-export function guessJobTitle(jd: string): string | null {
+function guessJobTitle(jd: string): string | null {
   const first = jd.split(/\r?\n/).map((l) => l.trim()).find(Boolean) ?? '';
   const m = jd.match(/(?:job title|position|role)\s*[:-]\s*([^\n]{3,80})/i);
   if (m) return m[1].trim();

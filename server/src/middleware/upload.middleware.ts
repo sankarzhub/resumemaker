@@ -2,8 +2,8 @@ import multer from 'multer';
 import type { RequestHandler } from 'express';
 import { AppError } from '../utils/AppError.js';
 
-export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
-export const MAX_UPLOAD_FILES = 4;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_UPLOAD_FILES = 4;
 
 // Images are accepted so scanned resumes/photos can be read when AI is on; the parser explains otherwise.
 const ALLOWED_EXTENSIONS = /\.(pdf|docx|txt|md|png|jpe?g|webp|doc)$/i;

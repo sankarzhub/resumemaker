@@ -18,7 +18,7 @@ function decode(s: string): string {
     .replace(/&(\w+);/g, (m, n: string) => ENTITIES[n] ?? m);
 }
 
-export function htmlToLines(html: string): DocLine[] {
+function htmlToLines(html: string): DocLine[] {
   const lines: DocLine[] = [];
   const stack: string[] = [];
   let text = '';

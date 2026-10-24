@@ -38,7 +38,7 @@ const ROLE_OPTIONS: Array<{ value: PickedFile['role']; label: string }> = [
 const LOADING_LINES = ['Reading your document…', 'Finding your skills and experience…', 'Rewriting bullets with action verbs…', 'Formatting for ATS parsers…', 'Almost there…']
 
 export function ImportPage() {
-  const { aiAvailable } = useAuth()
+  const { aiAvailable, uploadTotalMb } = useAuth()
   const navigate = useNavigate()
   const fileInput = useRef<HTMLInputElement>(null)
   const [mode, setMode] = useState<'file' | 'text'>('file')
@@ -90,6 +90,10 @@ export function ImportPage() {
       if (next.length >= MAX_FILES) {
         setError(`You can upload up to ${MAX_FILES} documents.`)
         break
+      }
+      if (uploadTotalMb && next.reduce((sum, x) => sum + x.file.size, f.size) > uploadTotalMb * 1024 * 1024) {
+        setError(`These files add up to more than ${uploadTotalMb} MB, the most this server accepts in one upload. Remove one, or upload a smaller PDF.`)
+        continue
       }
       next.push({ file: f, role: guessRole(f.name) })
     }
@@ -399,7 +403,7 @@ export function ImportPage() {
                 Your resume, plus your LinkedIn profile PDF (LinkedIn → your profile → More → Save to PDF) or any other document. We merge them into one resume.
               </p>
               <p className="text-xs text-slate-500">
-                Up to {MAX_FILES} files · PDF, DOCX or TXT{aiAvailable ? ', or a photo/scan (PNG, JPG) with AI on' : ''} · {MAX_MB} MB each · any layout: one or two columns, tables, Canva templates
+                Up to {MAX_FILES} files · PDF, DOCX or TXT{aiAvailable ? ', or a photo/scan (PNG, JPG) with AI on' : ''} · {uploadTotalMb ? `up to ${uploadTotalMb} MB in total` : `${MAX_MB} MB each`} · any layout: one or two columns, tables, Canva templates
               </p>
               <input ref={fileInput} type="file" multiple accept={ACCEPT} className="hidden" onChange={(e) => pickFiles(e.target.files)} />
             </div>

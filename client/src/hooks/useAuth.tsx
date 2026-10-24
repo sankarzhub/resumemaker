@@ -7,6 +7,8 @@ interface AuthState {
   user: User | null
   loading: boolean
   aiAvailable: boolean
+  /** Combined upload limit set by the host, or null when only the per-file limit applies. */
+  uploadTotalMb: number | null
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => Promise<void>
@@ -19,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const [aiAvailable, setAiAvailable] = useState(false)
+  const [uploadTotalMb, setUploadTotalMb] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -39,7 +42,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) return
-    authApi.fetchConfig().then((c) => setAiAvailable(c.aiAvailable), () => setAiAvailable(false))
+    authApi.fetchConfig().then(
+      (c) => {
+        setAiAvailable(c.aiAvailable)
+        setUploadTotalMb(c.uploadTotalMb ?? null)
+      },
+      () => setAiAvailable(false),
+    )
   }, [user])
 
   const login = useCallback(async (email: string, password: string) => setUser(await authApi.login({ email, password })), [])
@@ -60,8 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const value = useMemo(
-    () => ({ user, loading, aiAvailable, login, register, logout, deleteAccount }),
-    [user, loading, aiAvailable, login, register, logout, deleteAccount],
+    () => ({ user, loading, aiAvailable, uploadTotalMb, login, register, logout, deleteAccount }),
+    [user, loading, aiAvailable, uploadTotalMb, login, register, logout, deleteAccount],
   )
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

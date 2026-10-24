@@ -11,9 +11,11 @@ export interface RouteDeps {
   auth: AuthConfig;
   ai: AiService;
   rateLimits: boolean;
+  /** Combined upload size the host accepts (serverless request limits). Unset: per-file limit only. */
+  uploadTotalMb?: number;
 }
 
-export function createApiRouter({ auth, ai, rateLimits }: RouteDeps) {
+export function createApiRouter({ auth, ai, rateLimits, uploadTotalMb }: RouteDeps) {
   const router = Router();
   const limit = createLimiters(rateLimits);
   const authCtl = createAuthController(auth);
@@ -21,7 +23,7 @@ export function createApiRouter({ auth, ai, rateLimits }: RouteDeps) {
   const authed = requireAuth(auth);
 
   router.get('/config', (_req, res) => {
-    res.json({ success: true, data: { aiAvailable: ai.available } });
+    res.json({ success: true, data: { aiAvailable: ai.available, uploadTotalMb: uploadTotalMb ?? null } });
   });
 
   // Public auth endpoints (no session yet, so no CSRF token to check).

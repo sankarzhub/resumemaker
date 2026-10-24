@@ -1,0 +1,33 @@
+[build]
+  command = "npm ci --prefix server --include=dev && npm ci --prefix client --include=dev && npm run build"
+  publish = "client/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "server/netlify/functions"
+  # Keep the compiled server as plain files (no re-bundling) so runtime file lookups still resolve.
+  node_bundler = "nft"
+  # Read from disk at runtime, which the dependency tracer can't see.
+  included_files = [
+    "server/node_modules/@fontsource/*/package.json",
+    "server/node_modules/@fontsource/*/files/*-latin-*.woff",
+    "server/node_modules/pdfjs-dist/package.json",
+    "server/node_modules/pdfjs-dist/standard_fonts/**",
+    "server/node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+    "server/node_modules/pdfkit/js/data/**",
+    # pdf.js loads its canvas polyfill (and the platform binary) with a dynamic require.
+    "server/node_modules/@napi-rs/**",
+  ]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

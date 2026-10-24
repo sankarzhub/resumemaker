@@ -166,6 +166,24 @@ Status codes: 400 validation, 401 unauthenticated, 403 CSRF, 404 not found or no
 - Deleting a resume deletes its analyses. Deleting the account deletes everything.
 - With AI on, resume text is sent to the Anthropic API. Review your organisation's data-retention settings before using real resumes.
 
+## Deploying to Netlify
+
+`netlify.toml` builds both packages, publishes `client/dist`, and serves the Express API as one Netlify Function (`server/netlify/functions/api.mjs` → `server/src/lambda.ts`). `/api/*` is rewritten to the function, so the site and API share one origin and cookies stay first-party.
+
+1. **MongoDB Atlas.** Create a free M0 cluster. Under *Database Access*, add a user with read/write on one database. Under *Network Access*, allow `0.0.0.0/0` (Netlify Functions have no fixed IPs). Copy the `mongodb+srv://…` connection string and put the database name before the `?` (for example `…mongodb.net/resumecraft?retryWrites=true&w=majority`).
+2. **Netlify site.** *Add new project → Import an existing project → GitHub*, then pick this repo. Build settings come from `netlify.toml`.
+3. **Environment variables** (*Project configuration → Environment variables*):
+   - `MONGODB_URI`: the Atlas string.
+   - `JWT_SECRET`: 48+ random characters (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`).
+   - `ANTHROPIC_API_KEY` (optional): enables the AI features. Leave it out to run rule-based only.
+   - Don't set `NODE_ENV` here: it would make the build skip dev dependencies. The function runs in production mode on its own. `CLIENT_URL` defaults to the site URL.
+4. Deploy, then open `/api/health`. It should report `"database":"connected"`.
+
+Limits that come from Netlify Functions:
+- A request body can be about 6 MB, and uploads arrive base64-encoded. The app therefore limits one upload to 4 MB in total and tells the user before uploading.
+- A synchronous function call has a time limit (10 s by default). The rule-based import and PDF export take about 1-2 s. AI drafts of long documents can take longer than that and fail with a timeout. Without an AI key, this doesn't happen.
+- Rate limits are counted per warm function instance, so they are looser than on a single server.
+
 ## Deployment notes
 
 - Use managed MongoDB with a least-privilege user. Set every env var through the host's secret manager.
@@ -180,5 +198,5 @@ Status codes: 400 validation, 401 unauthenticated, 403 CSRF, 404 not found or no
 - Rule-based merging matches roles by company name. When LinkedIn groups several roles under one company, later roles may lose the company name until you fill it in (the AI draft handles this).
 - The rule-based parser handles common layouts. Unusual layouts (multi-column PDFs, tables) may need manual fixes in the review step, and the AI draft handles them much better.
 - Job matching only recognises skills in the curated dictionary. Niche tools aren't detected until they're added there.
-- The PDF export uses the standard Helvetica font, so characters outside Western European scripts are dropped (`₹` becomes `INR`). Use DOCX for other scripts.
+- The PDF export embeds Latin font subsets only, so characters outside Western European scripts are dropped (`₹` becomes `INR`). Use DOCX for other scripts.
 - The AI integration is covered by tests with a fake provider and by a test of the no-key fallback. It has not been run against the live Claude API in this repository's test suite.

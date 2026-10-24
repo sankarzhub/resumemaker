@@ -26,6 +26,6 @@ export async function deleteAccount(): Promise<void> {
   await api.delete('/auth/me')
 }
 
-export async function fetchConfig(): Promise<{ aiAvailable: boolean }> {
+export async function fetchConfig(): Promise<{ aiAvailable: boolean; uploadTotalMb?: number | null }> {
   return (await api.get('/config')).data.data
 }

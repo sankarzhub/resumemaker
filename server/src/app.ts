@@ -13,9 +13,10 @@ export interface AppOptions {
   secureCookies: boolean;
   rateLimits: boolean;
   ai: AiService;
+  uploadTotalMb?: number;
 }
 
-export function createApp({ clientUrl, jwtSecret, secureCookies, rateLimits, ai }: AppOptions) {
+export function createApp({ clientUrl, jwtSecret, secureCookies, rateLimits, ai, uploadTotalMb }: AppOptions) {
   const app = express();
 
   app.disable('x-powered-by');
@@ -27,7 +28,7 @@ export function createApp({ clientUrl, jwtSecret, secureCookies, rateLimits, ai 
   app.use(cookieParser());
 
   app.use('/api/health', healthRouter);
-  app.use('/api', createApiRouter({ auth: { jwtSecret, secureCookies }, ai, rateLimits }));
+  app.use('/api', createApiRouter({ auth: { jwtSecret, secureCookies }, ai, rateLimits, uploadTotalMb }));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

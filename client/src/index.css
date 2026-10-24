@@ -1,0 +1,250 @@
+@import "tailwindcss";
+
+/* ResumeCraft "cinematic comic" design system.
+   The app chrome is comic-styled; the resume preview (.resume-paper) is deliberately plain for ATS. */
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bangers", "Impact", "Arial Black", sans-serif;
+  --font-label: "Barlow Condensed", "Arial Narrow", sans-serif;
+
+  --color-ink: #07080d;
+  --color-night: #0b0d14;
+  --color-panel: #141a2e;
+  --color-panel-2: #1b2340;
+  --color-line: #2a3459;
+  --color-hero: #e8212e;
+  --color-hero-dark: #a8121c;
+  --color-gold: #ffc72c;
+  --color-bolt: #2f7bff;
+  --color-cyan: #19d3ff;
+  --color-paper: #fff8e7;
+  --color-muted: #9aa4c7;
+  --color-good: #29d17c;
+  --color-warn: #ffb020;
+  --color-bad: #ff4757;
+
+  --animate-panel-in: panel-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  --animate-pow: pow 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-flicker: flicker 3.5s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(18px) rotate(-0.6deg) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pow {
+  0% { opacity: 0; transform: scale(0.3) rotate(-12deg); }
+  70% { opacity: 1; transform: scale(1.12) rotate(3deg); }
+  100% { transform: scale(1) rotate(-3deg); }
+}
+@keyframes flicker {
+  0%, 100% { text-shadow: 0 0 18px rgb(232 33 46 / 0.55), 4px 4px 0 #000; }
+  50% { text-shadow: 0 0 34px rgb(255 199 44 / 0.55), 4px 4px 0 #000; }
+}
+@keyframes flash-field {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(255 199 44 / 0); }
+  20%, 60% { box-shadow: 0 0 0 5px rgb(255 199 44 / 0.85); }
+}
+.flash-field { animation: flash-field 1.4s ease-in-out 1; }
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    @apply min-h-screen bg-night font-sans text-slate-100 antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 15% -10%, rgb(232 33 46 / 0.22), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 100% 0%, rgb(47 123 255 / 0.22), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 110%, rgb(255 199 44 / 0.10), transparent 60%);
+    background-attachment: fixed;
+  }
+  /* Halftone + film vignette over the whole app */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image: radial-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1.4px);
+    background-size: 7px 7px;
+    mask-image: radial-gradient(ellipse at center, transparent 30%, #000 100%);
+  }
+  #root { position: relative; z-index: 1; }
+  ::selection { background: var(--color-gold); color: #000; }
+  :focus-visible { outline: 3px solid var(--color-gold); outline-offset: 2px; }
+}
+
+@layer components {
+  .font-display { font-family: var(--font-display); letter-spacing: 0.04em; }
+  .font-label { font-family: var(--font-label); letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .title-action {
+    font-family: var(--font-display);
+    letter-spacing: 0.05em;
+    line-height: 0.95;
+    color: var(--color-paper);
+    text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  }
+  .title-glow { animation: var(--animate-flicker); }
+  .text-gradient-hero {
+    background: linear-gradient(100deg, var(--color-gold) 0%, #ff7a1a 45%, var(--color-hero) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 1px #000;
+    /* Parent .title-action text-shadow would paint solid black behind transparent text. */
+    text-shadow: none;
+    filter: drop-shadow(3px 3px 0 #000);
+  }
+
+  /* Comic panel: thick ink border + hard offset shadow */
+  .panel {
+    @apply relative rounded-md border-[3px] border-black bg-panel;
+    box-shadow: 6px 6px 0 #000, 0 0 0 1px rgb(255 255 255 / 0.04) inset, 0 18px 50px -20px rgb(0 0 0 / 0.8);
+  }
+  .panel-glow-red { box-shadow: 6px 6px 0 #000, 0 0 40px -10px rgb(232 33 46 / 0.6); }
+  .panel-glow-blue { box-shadow: 6px 6px 0 #000, 0 0 40px -10px rgb(47 123 255 / 0.6); }
+  .panel-glow-gold { box-shadow: 6px 6px 0 #000, 0 0 40px -10px rgb(255 199 44 / 0.55); }
+
+  .halftone {
+    background-image: radial-gradient(rgb(255 255 255 / 0.09) 1.2px, transparent 1.5px);
+    background-size: 8px 8px;
+  }
+  .halftone-red {
+    background-image: radial-gradient(rgb(232 33 46 / 0.35) 1.4px, transparent 1.8px);
+    background-size: 9px 9px;
+  }
+  .speed-lines {
+    background-image: repeating-conic-gradient(from 0deg at 50% 50%, rgb(255 255 255 / 0.06) 0deg 2deg, transparent 2deg 9deg);
+  }
+
+  /* Caption box like a comic narration panel */
+  .caption {
+    @apply inline-block border-2 border-black bg-gold px-3 py-1 text-black;
+    font-family: var(--font-label);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    box-shadow: 3px 3px 0 #000;
+    transform: rotate(-1.5deg);
+  }
+
+  /* Speech bubble */
+  .bubble {
+    @apply relative rounded-2xl border-[3px] border-black bg-paper px-4 py-3 text-slate-900;
+    box-shadow: 4px 4px 0 #000;
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    left: 28px;
+    bottom: -16px;
+    border-width: 16px 14px 0 0;
+    border-style: solid;
+    border-color: #000 transparent transparent transparent;
+  }
+  .bubble::before {
+    content: "";
+    position: absolute;
+    left: 31px;
+    bottom: -10px;
+    z-index: 1;
+    border-width: 11px 9px 0 0;
+    border-style: solid;
+    border-color: var(--color-paper) transparent transparent transparent;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border-[3px] border-black px-4 py-2 text-base transition-transform duration-100 select-none disabled:cursor-not-allowed disabled:opacity-50;
+    font-family: var(--font-display);
+    letter-spacing: 0.06em;
+    box-shadow: 4px 4px 0 #000;
+  }
+  .btn:not(:disabled):hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000; }
+  .btn:not(:disabled):active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
+  .btn-hero { @apply bg-hero text-white; text-shadow: 2px 2px 0 #000; }
+  .btn-gold { @apply bg-gold text-black; }
+  .btn-bolt { @apply bg-bolt text-white; text-shadow: 2px 2px 0 #000; }
+  .btn-ghost { @apply bg-panel-2 text-slate-100; }
+  .btn-sm { @apply px-2.5 py-1 text-sm; box-shadow: 3px 3px 0 #000; }
+  .btn-icon { @apply p-1.5; box-shadow: 2px 2px 0 #000; }
+
+  /* Form controls */
+  .field-label { @apply mb-1 block text-sm font-semibold text-muted; font-family: var(--font-label); letter-spacing: 0.08em; text-transform: uppercase; }
+  .input {
+    @apply w-full rounded-md border-2 border-black bg-ink/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition;
+    box-shadow: inset 2px 2px 0 rgb(0 0 0 / 0.5);
+  }
+  .input:focus { @apply border-gold outline-none; box-shadow: 0 0 0 3px rgb(255 199 44 / 0.25), inset 2px 2px 0 rgb(0 0 0 / 0.5); }
+  .input[aria-invalid="true"] { @apply border-bad; }
+  .field-error { @apply mt-1 text-xs font-medium text-bad; }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded border-2 border-black px-2 py-0.5 text-xs font-bold;
+    box-shadow: 2px 2px 0 #000;
+  }
+
+  /* Tabs drawn like comic page tabs */
+  .tab {
+    @apply relative -mb-[3px] rounded-t-md border-[3px] border-b-0 border-black bg-panel-2 px-3 py-1.5 text-base text-slate-300 transition-colors;
+    font-family: var(--font-display);
+    letter-spacing: 0.06em;
+  }
+  .tab[aria-selected="true"] { @apply bg-gold text-black; }
+
+  /* Score starburst ("POW") */
+  .burst {
+    clip-path: polygon(50% 0%, 61% 18%, 82% 8%, 79% 30%, 100% 35%, 84% 51%, 98% 70%, 76% 72%, 76% 95%, 58% 82%, 45% 100%, 37% 79%, 15% 90%, 20% 67%, 0% 58%, 17% 44%, 5% 22%, 27% 22%, 30% 0%, 43% 15%);
+  }
+}
+
+/* ATS preview: intentionally plain, single column, standard font. Mirrors the server export. */
+.resume-paper {
+  font-family: Calibri, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #111;
+  background: #fff;
+  line-height: 1.35;
+}
+
+.pdf-page-label {
+  position: absolute;
+  right: 8px;
+  bottom: -18px;
+  font-family: var(--font-label);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+/* Screen-only conflict markers inside the preview (never part of exports). */
+.conflict-mark-pending,
+.conflict-mark-ok {
+  position: relative;
+  margin: 6px -6px 0;
+  padding: 2px 6px 4px;
+  border-radius: 3px;
+}
+.conflict-mark-pending { outline: 2px dashed #e8212e; background: #fff1f1; }
+.conflict-mark-ok { outline: 1.5px solid #29b36a; background: #effbf4; }
+.conflict-mark-tag {
+  display: inline-block;
+  margin-bottom: 2px;
+  padding: 0 5px;
+  border-radius: 2px;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  background: #e8212e;
+}
+.conflict-mark-ok .conflict-mark-tag { background: #29b36a; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

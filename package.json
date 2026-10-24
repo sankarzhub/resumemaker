@@ -1,0 +1,19 @@
+{
+  "name": "resumecraft",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "concurrently -k -n server,client \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix server && npm run build --prefix client",
+    "test": "npm run test --prefix server && npm run test --prefix client",
+    "typecheck": "npm run typecheck --prefix server && npm run typecheck --prefix client",
+    "test:e2e": "npm run test:e2e --prefix client"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^10.0.6"
+  },
+  "private": true
+}

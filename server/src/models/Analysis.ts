@@ -29,5 +29,8 @@ const analysisSchema = new Schema(
   { timestamps: { createdAt: true, updatedAt: false } },
 );
 
+// History lookups and pruning read a resume's newest reports first.
+analysisSchema.index({ resumeId: 1, createdAt: -1 });
+
 export type AnalysisAttrs = InferSchemaType<typeof analysisSchema>;
 export const Analysis = model('Analysis', analysisSchema);

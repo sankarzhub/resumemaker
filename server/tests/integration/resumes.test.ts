@@ -105,6 +105,19 @@ describe('analysis and job matching', () => {
     expect((await A.agent.get(`/api/analyses/${analysisId}`)).status).toBe(200);
     expect((await B.agent.get(`/api/analyses/${analysisId}`)).status).toBe(404);
   });
+
+  it('keeps only the newest 20 reports per resume so the database does not fill up', async () => {
+    const ids: string[] = [];
+    for (let i = 0; i < 22; i++) {
+      const res = await post(A, `/api/resumes/${resumeId}/job-match`).send({ jobDescription: `${SAMPLE_JD}\nRun ${i}` });
+      expect(res.status).toBe(200);
+      ids.push(res.body.data.analysisId);
+    }
+    expect(await Analysis.countDocuments({ resumeId })).toBe(20);
+    const kept = (await A.agent.get(`/api/resumes/${resumeId}/analyses`)).body.data.items.map((a: { _id: string }) => a._id);
+    expect(kept).toEqual(ids.slice(-20).reverse());
+    expect((await A.agent.get(`/api/analyses/${ids[0]}`)).status).toBe(404);
+  });
 });
 
 describe('AI suggestions', () => {

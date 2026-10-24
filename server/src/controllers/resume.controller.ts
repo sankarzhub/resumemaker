@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
 import { z } from 'zod';
 import { Resume } from '../models/Resume.js';
-import { Analysis } from '../models/Analysis.js';
+import { Analysis, type AnalysisAttrs } from '../models/Analysis.js';
 import { AppError } from '../utils/AppError.js';
 import { getUserId } from '../middleware/auth.middleware.js';
 import {
@@ -79,6 +79,20 @@ interface ParsedDoc {
 
 // Original files are sent to the AI so it can read layouts, tables and scans itself. Keep requests bounded.
 const MAX_ATTACH_BYTES = 4.5 * 1024 * 1024;
+
+// Reports kept per resume: the history shows this many, and older ones (each can hold a 20 KB job
+// description) would only fill the database.
+const ANALYSES_KEPT = 20;
+
+async function saveAnalysis(attrs: Pick<AnalysisAttrs, 'userId' | 'resumeId'> & Record<string, unknown>) {
+  const analysis = await Analysis.create(attrs);
+  const stale = await Analysis.find({ resumeId: attrs.resumeId, userId: attrs.userId })
+    .sort({ createdAt: -1, _id: -1 })
+    .skip(ANALYSES_KEPT)
+    .select('_id');
+  if (stale.length) await Analysis.deleteMany({ _id: { $in: stale.map((d) => d._id) } });
+  return analysis;
+}
 
 const ROLE_LABEL: Record<DocRole, string> = { resume: 'Resume', linkedin: 'LinkedIn', other: 'Document' };
 
@@ -285,7 +299,7 @@ export function createResumeController(ai: AiService) {
       const content = toResumeContent(resume);
       const report = checkResumeQuality(content);
       const match = jobDescription && jobDescription.length >= 30 ? matchResumeToJob(content, jobDescription) : null;
-      const analysis = await Analysis.create({
+      const analysis = await saveAnalysis({
         userId: resume.userId,
         resumeId: resume._id,
         kind: 'quality',
@@ -306,7 +320,7 @@ export function createResumeController(ai: AiService) {
       const { jobDescription } = jobDescriptionSchema.parse(req.body);
       const resume = await findOwnedResume(req);
       const report = matchResumeToJob(toResumeContent(resume), jobDescription);
-      const analysis = await Analysis.create({
+      const analysis = await saveAnalysis({
         userId: resume.userId,
         resumeId: resume._id,
         kind: 'job-match',
@@ -334,8 +348,8 @@ export function createResumeController(ai: AiService) {
     async listAnalyses(req: Request, res: Response) {
       const resume = await findOwnedResume(req);
       const items = await Analysis.find({ resumeId: resume._id, userId: resume.userId })
-        .sort({ createdAt: -1 })
-        .limit(20)
+        .sort({ createdAt: -1, _id: -1 })
+        .limit(ANALYSES_KEPT)
         .select('kind score createdAt matchedSkills missingSkills');
       res.json({ success: true, data: { items } });
     },

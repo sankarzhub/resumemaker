@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode, type TextareaHTMLAttributes } from 'react'
 import { ArrowDown, ArrowUp, ChevronDown, Plus, Trash2, X } from 'lucide-react'
 import {
   emptyCertification,
@@ -93,13 +93,19 @@ function TagInput({ label, values, onChange, placeholder, path }: { label: strin
         {values.map((v, i) => (
           <span key={`${v}-${i}`} className="chip bg-gold text-black">
             {v}
-            <button type="button" aria-label={`Remove ${v}`} onClick={() => onChange(values.filter((_, idx) => idx !== i))}>
+            <button
+              type="button"
+              // Finger-sized hit area on phones; the negative margin keeps the chip itself small.
+              className="-my-3 -mr-2 inline-flex min-h-10 min-w-10 items-center justify-center sm:my-0 sm:mr-0 sm:min-h-0 sm:min-w-0"
+              aria-label={`Remove ${v}`}
+              onClick={() => onChange(values.filter((_, idx) => idx !== i))}
+            >
               <X className="h-3 w-3" />
             </button>
           </span>
         ))}
         <input
-          className="min-w-32 flex-1 bg-transparent text-sm outline-none"
+          className="min-w-32 flex-1 bg-transparent text-base outline-none sm:text-sm"
           value={draft}
           placeholder={values.length ? '' : placeholder}
           aria-label={`Add ${label}`}
@@ -121,6 +127,31 @@ function TagInput({ label, values, onChange, placeholder, path }: { label: strin
   )
 }
 
+// Grows with its text so a whole bullet stays readable, even when it wraps on a narrow phone screen.
+function AutoGrowTextarea(props: TextareaHTMLAttributes<HTMLTextAreaElement> & { value: string }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const fit = () => {
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`
+    }
+    fit()
+    if (typeof ResizeObserver === 'undefined') return
+    // Rewrap when the width changes (rotation, panel resize). Height changes come from fit() itself.
+    let width = el.clientWidth
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth === width) return
+      width = el.clientWidth
+      fit()
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [props.value])
+  return <textarea ref={ref} rows={1} {...props} />
+}
+
 function BulletEditor({ bullets, onChange, label, pathPrefix }: { bullets: string[]; onChange: (b: string[]) => void; label: string; pathPrefix?: string }) {
   return (
     <div>
@@ -134,9 +165,8 @@ function BulletEditor({ bullets, onChange, label, pathPrefix }: { bullets: strin
                 ●
               </span>
               <div className="flex-1">
-                <textarea
-                  className="input min-h-10 resize-y py-1.5"
-                  rows={1}
+                <AutoGrowTextarea
+                  className="input min-h-10 resize-none overflow-hidden py-1.5"
                   value={b}
                   aria-label={`${label} bullet ${i + 1}`}
                   data-path={pathPrefix ? `${pathPrefix}.description[${i}]` : undefined}

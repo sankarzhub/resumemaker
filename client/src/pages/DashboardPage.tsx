@@ -145,7 +145,7 @@ export function DashboardPage() {
       </section>
 
       <section className="pt-4 text-right">
-        <button type="button" className="text-xs text-slate-500 underline hover:text-hero" onClick={() => setConfirmAccount(true)}>
+        <button type="button" className="inline-flex min-h-10 items-center text-xs text-slate-500 underline hover:text-hero" onClick={() => setConfirmAccount(true)}>
           Delete my account and all data
         </button>
       </section>

@@ -166,19 +166,24 @@
     letter-spacing: 0.06em;
     box-shadow: 4px 4px 0 #000;
   }
-  .btn:not(:disabled):hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000; }
+  /* Hover lift only where a pointer hovers; on touch screens it would stick after a tap. */
+  @media (hover: hover) {
+    .btn:not(:disabled):hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000; }
+  }
   .btn:not(:disabled):active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 #000; }
   .btn-hero { @apply bg-hero text-white; text-shadow: 2px 2px 0 #000; }
   .btn-gold { @apply bg-gold text-black; }
   .btn-bolt { @apply bg-bolt text-white; text-shadow: 2px 2px 0 #000; }
   .btn-ghost { @apply bg-panel-2 text-slate-100; }
-  .btn-sm { @apply px-2.5 py-1 text-sm; box-shadow: 3px 3px 0 #000; }
-  .btn-icon { @apply p-1.5; box-shadow: 2px 2px 0 #000; }
+  /* Small buttons stay finger-sized (40px) on phones and compact from sm up. */
+  .btn-sm { @apply min-h-10 px-2.5 py-1 text-sm sm:min-h-0; box-shadow: 3px 3px 0 #000; }
+  .btn-icon { @apply min-h-10 min-w-10 p-1.5 sm:min-h-0 sm:min-w-0; box-shadow: 2px 2px 0 #000; }
 
   /* Form controls */
   .field-label { @apply mb-1 block text-sm font-semibold text-muted; font-family: var(--font-label); letter-spacing: 0.08em; text-transform: uppercase; }
   .input {
-    @apply w-full rounded-md border-2 border-black bg-ink/70 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 transition;
+    @apply w-full rounded-md border-2 border-black bg-ink/70 px-3 py-2 text-base text-slate-100 placeholder:text-slate-500 transition sm:text-sm;
+    /* 16px on phones: iOS Safari zooms the page when a smaller input gets focus. */
     box-shadow: inset 2px 2px 0 rgb(0 0 0 / 0.5);
   }
   .input:focus { @apply border-gold outline-none; box-shadow: 0 0 0 3px rgb(255 199 44 / 0.25), inset 2px 2px 0 rgb(0 0 0 / 0.5); }
@@ -192,7 +197,7 @@
 
   /* Tabs drawn like comic page tabs */
   .tab {
-    @apply relative -mb-[3px] rounded-t-md border-[3px] border-b-0 border-black bg-panel-2 px-3 py-1.5 text-base text-slate-300 transition-colors;
+    @apply relative -mb-[3px] rounded-t-md border-[3px] border-b-0 border-black bg-panel-2 min-h-10 px-3 py-1.5 text-base text-slate-300 transition-colors sm:min-h-0;
     font-family: var(--font-display);
     letter-spacing: 0.06em;
   }

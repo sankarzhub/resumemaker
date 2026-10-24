@@ -7,6 +7,7 @@ import { toContent, type AiSuggestion, type JobMatchReport, type QualityReport, 
 import { Alert, FullPageLoader, Spinner, TextArea } from '../components/common/ui'
 import { ResumeForm } from '../components/resume/ResumeForm'
 import { PreviewPane } from '../components/resume/PreviewPane'
+import { PreviewJump } from '../components/resume/PreviewJump'
 import { JobMatchView, QualityReportView, SuggestionCard } from '../components/analysis/Reports'
 import { useAuth } from '../hooks/useAuth'
 import { applySuggestion } from '../utils/suggestions'
@@ -184,7 +185,7 @@ export function ResumeEditorPage() {
       </div>
       {save === 'error' && <Alert onRetry={() => void flush()}>{saveError}</Alert>}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_minmax(0,560px)]">
+      <div className="grid gap-6 pb-20 xl:grid-cols-[1fr_minmax(0,560px)] xl:pb-0">
         <div className="min-w-0">
           <div role="tablist" className="flex flex-wrap gap-1 border-b-[3px] border-black">
             {tabs.map((t) => (
@@ -284,7 +285,7 @@ export function ResumeEditorPage() {
           </div>
         </div>
 
-        <aside className="xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-2 xl:pb-6">
+        <aside id="live-preview" className="scroll-mt-24 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-2 xl:pb-6">
           <p className="font-label mb-2 text-sm text-muted">Live preview · the exact PDF you will download</p>
           <PreviewPane
             content={content}
@@ -294,6 +295,7 @@ export function ResumeEditorPage() {
             onFitToPage={(fitToPage) => changeMeta({ fitToPage })}
           />
         </aside>
+        <PreviewJump targetId="live-preview" />
       </div>
     </div>
   )

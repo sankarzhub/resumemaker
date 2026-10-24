@@ -138,7 +138,7 @@ export function PreviewPane({ content, templateId, fitToPage, onTemplate, onFitT
               aria-checked={templateId === t.id}
               title={t.description}
               onClick={() => onTemplate(t.id)}
-              className={`rounded-md border-2 border-black px-2 py-1.5 text-sm font-semibold transition-transform hover:-translate-y-0.5 ${templateId === t.id ? 'bg-gold text-black' : 'bg-panel-2 text-slate-200'}`}
+              className={`min-h-10 rounded-md border-2 border-black px-2 py-1.5 text-sm sm:min-h-0 font-semibold transition-transform hover:-translate-y-0.5 ${templateId === t.id ? 'bg-gold text-black' : 'bg-panel-2 text-slate-200'}`}
               style={{ boxShadow: '3px 3px 0 #000', fontFamily: t.id === 'executive' ? 'Georgia, "Times New Roman", serif' : undefined }}
             >
               {t.label}

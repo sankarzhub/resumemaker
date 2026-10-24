@@ -11,6 +11,7 @@ import { anchorConflicts, conflictId, conflictMap, conflictStatus, describePath,
 import { Alert, TextArea, TextField } from '../components/common/ui'
 import { ResumeForm } from '../components/resume/ResumeForm'
 import { PreviewPane } from '../components/resume/PreviewPane'
+import { PreviewJump } from '../components/resume/PreviewJump'
 import { JobMatchView, QualityReportView } from '../components/analysis/Reports'
 import { useAuth } from '../hooks/useAuth'
 
@@ -243,7 +244,7 @@ export function ImportPage() {
                       <li key={conflictId(c)} className="flex flex-wrap items-center gap-2">
                         <span>• {c.path ? describePath(draft, c.path).join(' › ') : c.label}</span>
                         {c.path && (
-                          <button type="button" className="text-gold underline underline-offset-2 hover:text-white" onClick={() => jump(c.path!)}>
+                          <button type="button" className="inline-flex min-h-10 items-center text-gold underline underline-offset-2 hover:text-white sm:min-h-0" onClick={() => jump(c.path!)}>
                             Show me
                           </button>
                         )}
@@ -292,7 +293,7 @@ export function ImportPage() {
           </div>
         </section>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_minmax(0,560px)]">
+        <div className="grid gap-6 pb-20 xl:grid-cols-[1fr_minmax(0,560px)] xl:pb-0">
           <div>
             <div role="tablist" className="flex gap-1 border-b-[3px] border-black">
               <button role="tab" type="button" className="tab" aria-selected={reviewTab === 'edit'} onClick={() => setReviewTab('edit')}>Edit draft</button>
@@ -339,7 +340,7 @@ export function ImportPage() {
               </details>
             </div>
           </div>
-          <aside className="xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-2 xl:pb-6">
+          <aside id="live-preview" className="scroll-mt-24 xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-2 xl:pb-6">
             <p className="font-label mb-2 text-sm text-muted">Live preview · the exact PDF you will download</p>
             <PreviewPane
               content={draft}
@@ -350,6 +351,7 @@ export function ImportPage() {
               marks={Object.fromEntries(Object.entries(flags).map(([path, f]) => [path, f.status]))}
             />
           </aside>
+          <PreviewJump targetId="live-preview" />
         </div>
       </div>
     )

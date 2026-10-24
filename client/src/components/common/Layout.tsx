@@ -24,7 +24,7 @@ export function AppLayout() {
   const [busy, setBusy] = useState(false)
 
   const navCls = ({ isActive }: { isActive: boolean }) =>
-    `inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 font-label text-base font-semibold transition-colors ${
+    `inline-flex min-h-10 items-center gap-1.5 rounded px-2.5 py-1.5 sm:min-h-0 font-label text-base font-semibold transition-colors ${
       isActive ? 'bg-gold text-black' : 'text-slate-300 hover:text-white'
     }`
 
@@ -34,10 +34,10 @@ export function AppLayout() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5">
           <Logo />
           <nav className="flex items-center gap-1 sm:gap-2" aria-label="Main">
-            <NavLink to="/dashboard" className={navCls}>
+            <NavLink to="/dashboard" className={navCls} aria-label="Dashboard">
               <LayoutDashboard className="h-4 w-4" /> <span className="hidden sm:inline">Dashboard</span>
             </NavLink>
-            <NavLink to="/import" className={navCls}>
+            <NavLink to="/import" className={navCls} aria-label="Upload">
               <Upload className="h-4 w-4" /> <span className="hidden sm:inline">Upload</span>
             </NavLink>
             <span className="mx-1 hidden h-6 w-px bg-line md:block" />
@@ -47,6 +47,7 @@ export function AppLayout() {
             <button
               type="button"
               className="btn btn-ghost btn-sm"
+              aria-label="Logout"
               disabled={busy}
               onClick={async () => {
                 setBusy(true)

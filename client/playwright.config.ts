@@ -15,7 +15,11 @@ export default defineConfig({
     trace: 'retain-on-failure',
     viewport: { width: 1440, height: 900 },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
+  projects: [
+    { name: 'chromium', testIgnore: /mobile\.spec/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+    // iPhone-sized viewport and touch, rendered with Chromium.
+    { name: 'mobile', testMatch: /mobile\.spec/, use: { ...devices['iPhone 12'], browserName: 'chromium' } },
+  ],
   webServer: [
     {
       command: 'npx tsx src/server.ts',

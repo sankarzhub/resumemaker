@@ -125,4 +125,29 @@ describe('export service', () => {
   it('builds a safe filename', () => {
     expect(exportFilename(sampleResume(), 'pdf')).toBe('Priya_Raman_Resume.pdf');
   });
+
+  it('prints sections in the saved order, in both PDF and DOCX', async () => {
+    const r = { ...sampleResume(), layout: { contactIcons: 'none' as const, offsets: {}, sectionOrder: ['education', 'projects'] } };
+    const text = await extractText(await renderResumePdf(r, 'classic'), 'pdf');
+    const at = (s: string) => text.toUpperCase().indexOf(s);
+    expect(at('EDUCATION')).toBeLessThan(at('PROJECTS'));
+    expect(at('PROJECTS')).toBeLessThan(at('PROFESSIONAL SUMMARY'));
+    const docx = (await mammoth.extractRawText({ buffer: await renderResumeDocx(r, 'classic') })).value.toUpperCase();
+    expect(docx.indexOf('EDUCATION')).toBeLessThan(docx.indexOf('PROFESSIONAL SUMMARY'));
+  });
+
+  it('reports movable blocks and keeps text readable when moved blocks cross a page break', async () => {
+    const r = sampleResume();
+    r.experience = Array.from({ length: 12 }, (_, i) => ({ ...r.experience[0], company: `Company ${i + 1}`, description: [...r.experience[0].description, ...r.experience[0].description] }));
+    const moved = { ...r, layout: { contactIcons: 'badges' as const, offsets: { 'sec-experience': { x: 4, y: 6 }, 'exp-0': { x: 10, y: 0 } }, sectionOrder: [] } };
+    const out = await renderResumePdfDetailed(moved, 'classic');
+    expect(out.pages).toBeGreaterThan(1);
+    const sec = out.boxes.filter((b) => b.id === 'sec-experience');
+    expect(sec.length).toBeGreaterThan(1); // one box per page it spans
+    expect(out.boxes.find((b) => b.id === 'exp-0')).toMatchObject({ parent: 'sec-experience', ox: 10, oy: 0 });
+    const text = await extractText(out.buffer, 'pdf');
+    expect(text).toContain('Company 12');
+    expect(text).toContain('Company 1');
+  });
+
 });

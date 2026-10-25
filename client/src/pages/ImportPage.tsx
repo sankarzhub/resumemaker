@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ClipboardPaste, FileText, FileUp, Save, Sparkles, Wand2, X } from 'lucide-react'
 import { createResume, importText, uploadResume } from '../api/resumeApi'
 import { getErrorMessage } from '../api/axios'
-import type { Conflict, DocRole, ImportResult, ResumeContent, TemplateId } from '../types/resume'
+import { emptyLayout, type Conflict, type DocRole, type ImportResult, type ResumeContent, type ResumeLayout, type TemplateId } from '../types/resume'
 import { ConflictsPanel } from '../components/analysis/ConflictsPanel'
 import { FixChecklist } from '../components/analysis/FixChecklist'
 import { buildChecklist, type AnchoredSuggestion, type FixItem } from '../utils/checklist'
@@ -49,6 +49,7 @@ export function ImportPage() {
   const [suggestions, setSuggestions] = useState<AnchoredSuggestion[]>([])
   const [templateId, setTemplateId] = useState<TemplateId>('classic')
   const [fitToPage, setFitToPage] = useState(false)
+  const [layout, setLayout] = useState<ResumeLayout>(emptyLayout)
   const [initialIssues, setInitialIssues] = useState<Record<string, string>>({})
   const [text, setText] = useState('')
   const [useAi, setUseAi] = useState(true)
@@ -178,7 +179,7 @@ export function ImportPage() {
     setSaving(true)
     setError('')
     try {
-      const r = await createResume({ title: title.trim() || 'Imported resume', ...stripKeys(draft), templateId, fitToPage, source: result.ai.used ? 'ai' : 'upload' })
+      const r = await createResume({ title: title.trim() || 'Imported resume', ...stripKeys(draft), templateId, fitToPage, layout, source: result.ai.used ? 'ai' : 'upload' })
       navigate(`/resumes/${r.id}`)
     } catch (err) {
       setError(getErrorMessage(err))
@@ -348,6 +349,9 @@ export function ImportPage() {
               fitToPage={fitToPage}
               onTemplate={setTemplateId}
               onFitToPage={setFitToPage}
+              layout={layout}
+              onLayout={setLayout}
+              onContent={setDraft}
               marks={Object.fromEntries(Object.entries(flags).map(([path, f]) => [path, f.status]))}
             />
           </aside>

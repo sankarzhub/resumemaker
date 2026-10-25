@@ -297,19 +297,25 @@ describe('export', () => {
   });
 
   it('previews unsaved content as the exact export PDF with page count', async () => {
-    const res = await post(A, '/api/resumes/preview')
-      .send({ ...sampleResume(), templateId: 'executive', fitToPage: false })
-      .buffer(true)
-      .parse((r, cb) => {
-        const chunks: Buffer[] = [];
-        r.on('data', (c: Buffer) => chunks.push(c));
-        r.on('end', () => cb(null, Buffer.concat(chunks)));
-      });
+    const res = await post(A, '/api/resumes/preview').send({ ...sampleResume(), templateId: 'executive', fitToPage: false });
     expect(res.status).toBe(200);
-    expect(res.headers['content-type']).toBe('application/pdf');
-    expect(res.headers['x-page-count']).toBe('1');
-    expect((res.body as Buffer).subarray(0, 5).toString()).toBe('%PDF-');
+    expect(res.body.data.pages).toBe(1);
+    expect(Buffer.from(res.body.data.pdf, 'base64').subarray(0, 5).toString()).toBe('%PDF-');
+    expect(res.body.data.boxes.map((b: { id: string }) => b.id)).toEqual(expect.arrayContaining(['name', 'contacts', 'sec-experience', 'exp-0']));
     expect((await post(A, '/api/resumes/preview').send({ templateId: 'fancy' })).status).toBe(400);
+  });
+
+  it('saves contact icons and dragged positions, and rejects bad offsets', async () => {
+    const created = await post(A, '/api/resumes').send({ ...sampleResume(), title: 'Layout' });
+    const id = created.body.data.id as string;
+    const layout = { contactIcons: 'badges', offsets: { name: { x: 12, y: -4 }, 'exp-0-b1': { x: 0, y: 30 } }, sectionOrder: ['education', 'experience'] };
+    const res = await patch(A, `/api/resumes/${id}`).send({ layout });
+    expect(res.status).toBe(200);
+    expect(res.body.data.layout).toEqual(layout);
+    const bad = await patch(A, `/api/resumes/${id}`).send({ layout: { offsets: { 'a.b': { x: 1, y: 1 } } } });
+    expect(bad.status).toBe(400);
+    const far = await patch(A, `/api/resumes/${id}`).send({ layout: { offsets: { name: { x: 5000, y: 0 } } } });
+    expect(far.status).toBe(400);
   });
 
   it('saves template and fit-to-page choices', async () => {

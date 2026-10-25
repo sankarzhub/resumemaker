@@ -1,8 +1,22 @@
+/** "inline": a small icon before each contact; "badges": clickable brand icons top-right (like a LinkedIn badge). */
+export type ContactIcons = 'none' | 'inline' | 'badges';
+
+/** PDF-only presentation choices. Offsets are points by block id (e.g. "exp-0"), relative to the natural position. */
+export interface ResumeLayout {
+  contactIcons: ContactIcons;
+  offsets: Record<string, { x: number; y: number }>;
+  /** Section keys in reading order ("experience", "extra-0"…); sections not listed follow in the default order. */
+  sectionOrder: string[];
+}
+
+export const emptyLayout = (): ResumeLayout => ({ contactIcons: 'none', offsets: {}, sectionOrder: [] });
+
 // Plain resume content shape shared by the parser, ATS engine, matcher, AI and export services.
 export interface ResumeContent {
   title?: string;
   templateId?: 'classic' | 'modern' | 'compact' | 'executive' | 'minimal' | 'bold';
   fitToPage?: boolean;
+  layout?: ResumeLayout;
   targetJobTitle?: string;
   personalInfo: {
     fullName: string;

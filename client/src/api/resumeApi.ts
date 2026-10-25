@@ -1,5 +1,5 @@
 import { api } from './axios'
-import type { AiSuggestion, DocRole, ImportResult, JobMatchReport, QualityReport, Resume, ResumeContent, ResumeListItem, TemplateId } from '../types/resume'
+import type { AiSuggestion, DocRole, ImportResult, JobMatchReport, LayoutBox, QualityReport, Resume, ResumeContent, ResumeLayout, ResumeListItem, TemplateId } from '../types/resume'
 
 // AI calls can take a while on long documents.
 const AI_TIMEOUT = 240_000
@@ -20,7 +20,7 @@ export async function getResume(id: string): Promise<Resume> {
   return (await api.get(`/resumes/${id}`)).data.data
 }
 
-export async function createResume(input: Partial<ResumeContent> & { title: string; templateId?: TemplateId; fitToPage?: boolean; source?: Resume['source'] }): Promise<Resume> {
+export async function createResume(input: Partial<ResumeContent> & { title: string; templateId?: TemplateId; fitToPage?: boolean; layout?: ResumeLayout; source?: Resume['source'] }): Promise<Resume> {
   return (await api.post('/resumes', input)).data.data
 }
 
@@ -30,21 +30,20 @@ export interface PdfPreview {
   scale: number
   spacing: number
   fitted: boolean
+  boxes: LayoutBox[]
 }
 
 /** The exact PDF the export would produce, for unsaved content. */
-export async function previewPdf(content: ResumeContent, templateId: TemplateId, fitToPage: boolean, signal?: AbortSignal): Promise<PdfPreview> {
-  const res = await api.post('/resumes/preview', { ...content, templateId, fitToPage }, { responseType: 'arraybuffer', signal, timeout: 30_000 })
-  return {
-    data: res.data as ArrayBuffer,
-    pages: Number(res.headers['x-page-count'] ?? 1),
-    scale: Number(res.headers['x-fit-scale'] ?? 1),
-    spacing: Number(res.headers['x-fit-spacing'] ?? 1),
-    fitted: res.headers['x-fitted'] === 'true',
-  }
+export async function previewPdf(content: ResumeContent, templateId: TemplateId, fitToPage: boolean, layout: ResumeLayout, signal?: AbortSignal): Promise<PdfPreview> {
+  const res = await api.post('/resumes/preview', { ...content, templateId, fitToPage, layout }, { signal, timeout: 30_000 })
+  const out = res.data.data as Omit<PdfPreview, 'data'> & { pdf: string }
+  const bin = atob(out.pdf)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return { data: bytes.buffer, pages: out.pages, scale: out.scale, spacing: out.spacing, fitted: out.fitted, boxes: out.boxes ?? [] }
 }
 
-export async function updateResume(id: string, input: Partial<ResumeContent> & { title?: string; templateId?: TemplateId; fitToPage?: boolean }): Promise<Resume> {
+export async function updateResume(id: string, input: Partial<ResumeContent> & { title?: string; templateId?: TemplateId; fitToPage?: boolean; layout?: ResumeLayout }): Promise<Resume> {
   return (await api.patch(`/resumes/${id}`, input)).data.data
 }
 

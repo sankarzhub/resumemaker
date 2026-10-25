@@ -1,16 +1,22 @@
 import type { ResumeDoc } from '../models/Resume.js';
-import type { ResumeContent } from '../types/resume.js';
+import { emptyLayout, type ResumeContent, type ResumeLayout } from '../types/resume.js';
 import type { Template } from '../services/export.service.js';
 
 /** Convert a stored resume document into the plain content shape the services use. */
-export function toResumeContent(doc: ResumeDoc): ResumeContent & { title: string; templateId: Template; fitToPage: boolean } {
+export function toResumeContent(doc: ResumeDoc): ResumeContent & { title: string; templateId: Template; fitToPage: boolean; layout: ResumeLayout } {
   const o = doc.toObject();
   const s = (v: unknown) => (typeof v === 'string' ? v : '');
   const pi = (o.personalInfo ?? {}) as Record<string, unknown>;
+  const lay = (o.layout ?? {}) as { contactIcons?: string; offsets?: unknown; sectionOrder?: unknown };
   return {
     title: o.title,
     templateId: (o.templateId as Template) ?? 'classic',
     fitToPage: Boolean(o.fitToPage),
+    layout: {
+      contactIcons: lay.contactIcons === 'inline' || lay.contactIcons === 'badges' ? lay.contactIcons : 'none',
+      offsets: lay.offsets && typeof lay.offsets === 'object' ? (lay.offsets as ResumeLayout['offsets']) : emptyLayout().offsets,
+      sectionOrder: Array.isArray(lay.sectionOrder) ? lay.sectionOrder.map(String) : [],
+    },
     targetJobTitle: s(o.targetJobTitle),
     personalInfo: {
       fullName: s(pi.fullName),

@@ -10,6 +10,38 @@ export const TEMPLATES: Array<{ id: TemplateId; label: string; description: stri
   { id: 'bold', label: 'Bold', description: 'Teal header band and heading bars. Stands out, still ATS-safe.' },
 ]
 
+export type ContactIcons = 'none' | 'inline' | 'badges'
+
+export const CONTACT_ICON_OPTIONS: Array<{ id: ContactIcons; label: string; description: string }> = [
+  { id: 'none', label: 'Text', description: 'Contact details as plain text. Safest for ATS.' },
+  { id: 'inline', label: 'Icons + text', description: 'A small clickable icon before each contact detail.' },
+  { id: 'badges', label: 'Badges', description: 'Clickable LinkedIn, GitHub, email, phone and website icons top-right. Email and phone stay as text for ATS.' },
+]
+
+/** PDF-only presentation: contact icons and dragged block offsets (points, by block id). Matches the server. */
+export interface ResumeLayout {
+  contactIcons: ContactIcons
+  offsets: Record<string, { x: number; y: number }>
+  /** Section keys in print order ("experience", "extra-0"…); sections not listed follow in the default order. */
+  sectionOrder: string[]
+}
+
+export const emptyLayout = (): ResumeLayout => ({ contactIcons: 'none', offsets: {}, sectionOrder: [] })
+
+/** One movable block on one PDF page, in points from the page's top-left (see server LayoutBox). */
+export interface LayoutBox {
+  id: string
+  label: string
+  page: number
+  x: number
+  y: number
+  w: number
+  h: number
+  ox: number
+  oy: number
+  parent?: string
+}
+
 export interface PersonalInfo {
   fullName: string
   email: string
@@ -82,6 +114,7 @@ export interface Resume extends ResumeContent {
   title: string
   templateId: TemplateId
   fitToPage: boolean
+  layout: ResumeLayout
   source: 'manual' | 'upload' | 'ai'
   createdAt: string
   updatedAt: string

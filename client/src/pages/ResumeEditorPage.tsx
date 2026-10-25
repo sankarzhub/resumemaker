@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, Check, Download, FileText, Gauge, Save, Sparkles, Target } from 'lucide-react'
 import { analyzeResume, exportUrl, getResume, improveResume, jobMatch, updateResume } from '../api/resumeApi'
 import { getErrorMessage, getErrorStatus } from '../api/axios'
-import { toContent, type AiSuggestion, type JobMatchReport, type QualityReport, type Resume, type ResumeContent } from '../types/resume'
+import { emptyLayout, toContent, type AiSuggestion, type JobMatchReport, type QualityReport, type Resume, type ResumeContent } from '../types/resume'
 import { Alert, FullPageLoader, Spinner, TextArea } from '../components/common/ui'
 import { ResumeForm } from '../components/resume/ResumeForm'
 import { PreviewPane } from '../components/resume/PreviewPane'
@@ -22,7 +22,7 @@ export function ResumeEditorPage() {
   const { id = '' } = useParams()
   const { aiAvailable } = useAuth()
   const [loadError, setLoadError] = useState<{ message: string; notFound: boolean } | null>(null)
-  const [meta, setMeta] = useState<Pick<Resume, 'title' | 'templateId' | 'fitToPage'> | null>(null)
+  const [meta, setMeta] = useState<Pick<Resume, 'title' | 'templateId' | 'fitToPage' | 'layout'> | null>(null)
   const [content, setContent] = useState<ResumeContent | null>(null)
   const [save, setSave] = useState<SaveState>('saved')
   const [saveError, setSaveError] = useState('')
@@ -34,13 +34,13 @@ export function ResumeEditorPage() {
   const [aiJd, setAiJd] = useState('')
   const [handled, setHandled] = useState<Record<string, 'accepted' | 'rejected'>>({})
   const timer = useRef<number | undefined>(undefined)
-  const pending = useRef<{ content?: ResumeContent; meta?: Partial<Pick<Resume, 'title' | 'templateId' | 'fitToPage'>> }>({})
+  const pending = useRef<{ content?: ResumeContent; meta?: Partial<Pick<Resume, 'title' | 'templateId' | 'fitToPage' | 'layout'>> }>({})
 
   const load = useCallback(async () => {
     setLoadError(null)
     try {
       const r = await getResume(id)
-      setMeta({ title: r.title, templateId: r.templateId, fitToPage: Boolean(r.fitToPage) })
+      setMeta({ title: r.title, templateId: r.templateId, fitToPage: Boolean(r.fitToPage), layout: r.layout ?? emptyLayout() })
       setContent(toContent(r))
     } catch (err) {
       setLoadError({ message: getErrorMessage(err), notFound: getErrorStatus(err) === 404 })
@@ -92,7 +92,7 @@ export function ResumeEditorPage() {
     pending.current.content = next
     schedule()
   }
-  const changeMeta = (patch: Partial<Pick<Resume, 'title' | 'templateId' | 'fitToPage'>>) => {
+  const changeMeta = (patch: Partial<Pick<Resume, 'title' | 'templateId' | 'fitToPage' | 'layout'>>) => {
     setMeta((m) => (m ? { ...m, ...patch } : m))
     pending.current.meta = { ...pending.current.meta, ...patch }
     schedule()
@@ -293,6 +293,9 @@ export function ResumeEditorPage() {
             fitToPage={meta.fitToPage}
             onTemplate={(templateId) => changeMeta({ templateId })}
             onFitToPage={(fitToPage) => changeMeta({ fitToPage })}
+            layout={meta.layout}
+            onLayout={(layout) => changeMeta({ layout })}
+            onContent={changeContent}
           />
         </aside>
         <PreviewJump targetId="live-preview" />

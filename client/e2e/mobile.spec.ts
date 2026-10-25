@@ -123,3 +123,48 @@ test('the whole flow works at phone size', async ({ page }) => {
     await auditMobile(page, `editor-${String(tab).replace(/\W+/g, '-')}`)
   }
 })
+
+test('on a phone, press-and-hold drags a block and a quick swipe still scrolls', async ({ page }) => {
+  await page.goto('/register')
+  await page.getByLabel('Full name').fill('Arjun Demo')
+  await page.getByLabel('Email').fill(`e2e-mobile-drag-${Date.now()}@example.com`)
+  await page.getByLabel('Password', { exact: true }).fill('Passw0rd!')
+  await page.getByLabel('Confirm password').fill('Passw0rd!')
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL(/\/dashboard/)
+  await page.getByRole('link', { name: 'Upload', exact: true }).click()
+  await page.locator('input[type=file]').setInputFiles({ name: 'arjun-resume.txt', mimeType: 'text/plain', buffer: Buffer.from(RESUME_TXT) })
+  await page.getByRole('button', { name: /Import my resume/i }).click()
+  await page.getByRole('button', { name: /Save resume/i }).click()
+  await expect(page.getByText('All changes saved')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Preview' }).click()
+  await page.getByRole('radiogroup', { name: 'Contact links' }).getByRole('radio', { name: 'Icons + text' }).click()
+  await page.getByRole('button', { name: 'Move items' }).click()
+  await auditMobile(page, 'arrange')
+  const block = page.getByRole('button', { name: /Move Experience: Software Developer/ })
+  await block.scrollIntoViewIfNeeded()
+  const cdp = await page.context().newCDPSession(page)
+  const touch = (type: string, x: number, y: number) =>
+    cdp.send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] })
+
+  // A quick swipe over a block scrolls the page and moves nothing.
+  let b = (await block.boundingBox())!
+  const scrollBefore = await page.evaluate(() => window.scrollY)
+  await touch('touchStart', b.x + 40, b.y + 10)
+  for (let i = 1; i <= 6; i++) await touch('touchMove', b.x + 40, b.y + 10 - i * 15)
+  await touch('touchEnd', 0, 0)
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollBefore + 40)
+  await expect(page.getByRole('button', { name: /Reset all positions/ })).toHaveCount(0)
+
+  // Press and hold, then drag: the entry moves.
+  await block.scrollIntoViewIfNeeded()
+  b = (await block.boundingBox())!
+  await touch('touchStart', b.x + 40, b.y + 10)
+  await page.waitForTimeout(450)
+  for (let i = 1; i <= 6; i++) await touch('touchMove', b.x + 40 + i * 3, b.y + 10 + i * 5)
+  await touch('touchEnd', 0, 0)
+  await expect(page.getByRole('button', { name: 'Reset all positions (1)' })).toBeVisible()
+  await expect(page.getByText('All changes saved')).toBeVisible({ timeout: 10_000 })
+  await auditMobile(page, 'arranged')
+})

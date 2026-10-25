@@ -1,19 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, CheckCircle2, FileText, Highlighter, Loader2, Minimize2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, FileText, Highlighter, Loader2, Minimize2, Move, RotateCcw } from 'lucide-react'
 import { previewPdf, type PdfPreview } from '../../api/resumeApi'
 import { getErrorMessage } from '../../api/axios'
-import { TEMPLATES, type ResumeContent, type TemplateId } from '../../types/resume'
+import { CONTACT_ICON_OPTIONS, TEMPLATES, type LayoutBox, type ResumeContent, type ResumeLayout, type TemplateId } from '../../types/resume'
 import type { ConflictStatus } from '../../utils/resumePath'
 import { loadPdfjs } from '../../utils/pdfjs'
 import { ResumePreview } from './ResumePreview'
+import { PdfArranger, type PageGeom } from './PdfArranger'
+import { swapBlocks } from '../../utils/arrange'
 
 const DEBOUNCE_MS = 450
 
+interface Arrange {
+  onMove: (id: string, offset: { x: number; y: number }) => void
+  onReset: (id: string) => void
+  onSwap: (id: string, withId: string) => void
+}
+
 /** Renders PDF bytes page by page onto canvases sized to the container, with page labels. */
-function PdfPages({ data, pages }: { data: ArrayBuffer; pages: number }) {
+function PdfPages({ data, pages, boxes, arrange }: { data: ArrayBuffer; pages: number; boxes: LayoutBox[]; arrange?: Arrange }) {
   const host = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(0)
   const [error, setError] = useState('')
+  // Page positions and the boxes of the same render, swapped in together once the pages are drawn.
+  const [drawn, setDrawn] = useState<{ pages: PageGeom[]; boxes: LayoutBox[] } | null>(null)
 
   useEffect(() => {
     const el = host.current
@@ -33,6 +43,7 @@ function PdfPages({ data, pages }: { data: ArrayBuffer; pages: number }) {
         // pdf.js transfers the buffer to its worker, so give it a copy.
         const doc = await pdfjs.getDocument({ data: new Uint8Array(data.slice(0)) }).promise
         const frag = document.createDocumentFragment()
+        const geom: Array<Omit<PageGeom, 'top' | 'left'> & { wrap: HTMLDivElement }> = []
         for (let i = 1; i <= doc.numPages; i++) {
           const page = await doc.getPage(i)
           const base = page.getViewport({ scale: 1 })
@@ -53,9 +64,11 @@ function PdfPages({ data, pages }: { data: ArrayBuffer; pages: number }) {
           label.textContent = `Page ${i} of ${doc.numPages}`
           wrap.append(canvas, label)
           frag.append(wrap)
+          geom.push({ wrap, canvas, scale: width / base.width, width: base.width, height: base.height })
         }
         if (cancelled) return
         el.replaceChildren(frag)
+        setDrawn({ pages: geom.map(({ wrap, ...g }) => ({ ...g, top: wrap.offsetTop, left: wrap.offsetLeft })), boxes })
         setError('')
         await doc.destroy()
       } catch {
@@ -65,12 +78,17 @@ function PdfPages({ data, pages }: { data: ArrayBuffer; pages: number }) {
     return () => {
       cancelled = true
     }
+    // A new `boxes` always comes with new `data`, so it need not trigger a redraw itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, width])
 
   return (
     <div>
       {error && <p className="mb-2 text-sm text-bad">{error}</p>}
-      <div ref={host} className="flex flex-col gap-5" role="document" aria-label={`Exact PDF preview, ${pages} page${pages === 1 ? '' : 's'}`} />
+      <div className="relative">
+        <div ref={host} className="flex flex-col gap-5" role="document" aria-label={`Exact PDF preview, ${pages} page${pages === 1 ? '' : 's'}`} />
+        {arrange && drawn && <PdfArranger boxes={drawn.boxes} pages={drawn.pages} onMove={arrange.onMove} onReset={arrange.onReset} onSwap={arrange.onSwap} />}
+      </div>
     </div>
   )
 }
@@ -81,6 +99,11 @@ interface Props {
   fitToPage: boolean
   onTemplate: (t: TemplateId) => void
   onFitToPage: (v: boolean) => void
+  /** Contact icons and dragged positions (PDF only). */
+  layout: ResumeLayout
+  onLayout: (l: ResumeLayout) => void
+  /** Swapping entries or bullets on the page reorders them in the resume itself. */
+  onContent: (c: ResumeContent) => void
   /** Conflict highlights; when present, a "Highlights" view is offered. */
   marks?: Record<string, ConflictStatus>
 }
@@ -89,15 +112,32 @@ interface Props {
  * Preview column: template picker, fit-to-one-page, and the EXACT PDF the export will produce
  * (rendered by the server's PDF engine), so page breaks and page count are never a surprise.
  */
-export function PreviewPane({ content, templateId, fitToPage, onTemplate, onFitToPage, marks }: Props) {
+export function PreviewPane({ content, templateId, fitToPage, onTemplate, onFitToPage, layout, onLayout, onContent, marks }: Props) {
   const hasMarks = Boolean(marks && Object.keys(marks).length > 0)
   // Start on the highlights when documents disagree, so the user sees where; the exact PDF is one click away.
   const [view, setView] = useState<'pdf' | 'marks'>(() => (marks && Object.values(marks).some((s) => s === 'pending') ? 'marks' : 'pdf'))
+  // With a mouse, dragging is always available. On touch it is opt-in so swiping the preview still scrolls.
+  const [arranging, setArranging] = useState(() => Boolean(window.matchMedia?.('(pointer: fine)').matches))
   const [pdf, setPdf] = useState<PdfPreview | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [nonce, setNonce] = useState(0)
-  const key = JSON.stringify(content)
+  const key = JSON.stringify([content, layout])
+  const moved = Object.keys(layout.offsets).length
+
+  const setOffset = (id: string, offset: { x: number; y: number } | null) => {
+    const offsets = { ...layout.offsets }
+    if (offset && (offset.x !== 0 || offset.y !== 0)) offsets[id] = offset
+    else delete offsets[id]
+    onLayout({ ...layout, offsets })
+  }
+
+  const swap = (a: string, b: string) => {
+    const out = swapBlocks(content, layout, a, b)
+    if (!out) return
+    if (out.content !== content) onContent(out.content)
+    onLayout(out.layout)
+  }
 
   const retry = useCallback(() => setNonce((n) => n + 1), [])
 
@@ -106,7 +146,8 @@ export function PreviewPane({ content, templateId, fitToPage, onTemplate, onFitT
     const timer = window.setTimeout(async () => {
       setLoading(true)
       try {
-        const out = await previewPdf(JSON.parse(key) as ResumeContent, templateId, fitToPage, ctrl.signal)
+        const [c, l] = JSON.parse(key) as [ResumeContent, ResumeLayout]
+        const out = await previewPdf(c, templateId, fitToPage, l, ctrl.signal)
         setPdf(out)
         setError('')
       } catch (err) {
@@ -189,6 +230,49 @@ export function PreviewPane({ content, templateId, fitToPage, onTemplate, onFitT
         </p>
       )}
 
+      {/* Contact icons */}
+      <div>
+        <p className="font-label mb-1.5 text-sm text-muted">Contact links</p>
+        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Contact links">
+          {CONTACT_ICON_OPTIONS.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              role="radio"
+              aria-checked={layout.contactIcons === o.id}
+              title={o.description}
+              onClick={() => onLayout({ ...layout, contactIcons: o.id })}
+              className={`min-h-10 rounded-md border-2 border-black px-2 py-1.5 text-sm font-semibold transition-transform hover:-translate-y-0.5 sm:min-h-0 ${layout.contactIcons === o.id ? 'bg-gold text-black' : 'bg-panel-2 text-slate-200'}`}
+              style={{ boxShadow: '3px 3px 0 #000' }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1.5 text-xs text-slate-400">{CONTACT_ICON_OPTIONS.find((o) => o.id === layout.contactIcons)?.description} Every link is clickable in the PDF.</p>
+      </div>
+
+      {/* Drag-to-position */}
+      {view === 'pdf' && (
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className={`btn btn-sm ${arranging ? 'btn-gold' : 'btn-ghost'}`} aria-pressed={arranging} onClick={() => setArranging((a) => !a)}>
+              <Move className="h-4 w-4" /> {arranging ? 'Done moving' : 'Move items'}
+            </button>
+            {moved > 0 && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => onLayout({ ...layout, offsets: {} })}>
+                <RotateCcw className="h-4 w-4" /> Reset all positions ({moved})
+              </button>
+            )}
+          </div>
+          {arranging && (
+            <p className="text-xs text-slate-400">
+              Drag anything on the page to place it exactly. Drop a line on another line (a job on a job, a section heading on a section heading) to swap them. Drag a section heading to move the whole section. Arrow keys nudge the selected item (Shift for bigger steps). On a phone, press and hold, then drag. Swaps change the order in both the PDF and DOCX; free positions apply to the PDF only.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* View toggle */}
       {hasMarks && (
         <div className="flex gap-1" role="tablist" aria-label="Preview mode">
@@ -222,7 +306,14 @@ export function PreviewPane({ content, templateId, fitToPage, onTemplate, onFitT
             </div>
           )}
           {error && pdf && <p className="mb-2 text-xs text-bad">{error} Showing the last good preview.</p>}
-          {pdf && <PdfPages data={pdf.data} pages={pdf.pages} />}
+          {pdf && (
+            <PdfPages
+              data={pdf.data}
+              pages={pdf.pages}
+              boxes={pdf.boxes}
+              arrange={arranging ? { onMove: (id, offset) => setOffset(id, offset), onReset: (id) => setOffset(id, null), onSwap: swap } : undefined}
+            />
+          )}
           {!pdf && !error && <div className="aspect-[210/297] w-full animate-pulse rounded bg-white/90" aria-hidden />}
         </div>
       )}

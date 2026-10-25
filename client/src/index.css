@@ -227,6 +227,43 @@
   color: var(--color-muted);
 }
 
+/* Drag-to-position layer over the exact PDF preview (screen only). */
+.pdf-arranger { z-index: 5; }
+.pdf-block {
+  position: absolute;
+  border-radius: 3px;
+  outline: 1px dashed transparent;
+  cursor: grab;
+  /* The page scrolls by hand while a touch press waits to become a drag (see PdfArranger). */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* Pointing at the page shows every movable block; pointing at one highlights it. */
+.pdf-arranger:hover .pdf-block { outline-color: rgba(29, 78, 216, 0.28); }
+.pdf-arranger .pdf-block:hover { outline: 2px dashed rgba(29, 78, 216, 0.7); background: rgba(29, 78, 216, 0.05); }
+.pdf-arranger .pdf-block:focus-visible,
+.pdf-arranger .pdf-block.is-selected { outline: 2px solid var(--color-gold); background: rgba(245, 197, 24, 0.08); }
+.pdf-arranger .pdf-block.is-dragging { cursor: grabbing; outline-color: transparent; background: transparent; }
+.pdf-arranger .pdf-block.is-drop-target { outline: 3px solid #16a34a; background: rgba(22, 163, 74, 0.14); }
+.pdf-ghost { box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); outline: 2px solid var(--color-gold); z-index: 6; }
+.pdf-block-tag {
+  position: absolute;
+  z-index: 7;
+  display: flex;
+  max-width: 90%;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #000;
+  border-radius: 4px;
+  background: var(--color-gold);
+  color: #000;
+  padding: 2px 8px;
+  font-family: var(--font-label);
+  font-size: 13px;
+  box-shadow: 2px 2px 0 #000;
+}
+
 /* Screen-only conflict markers inside the preview (never part of exports). */
 .conflict-mark-pending,
 .conflict-mark-ok {

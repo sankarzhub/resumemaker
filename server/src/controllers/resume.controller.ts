@@ -354,18 +354,23 @@ export function createResumeController(ai: AiService) {
       res.json({ success: true, data: { items } });
     },
 
-    /** Exact PDF for the live preview of unsaved content; page count and fit scale come back as headers. */
+    /** Exact PDF for the live preview of unsaved content, with page count, fit scale and movable block boxes. */
     async preview(req: Request, res: Response) {
       const body = previewSchema.parse(req.body ?? {});
       const content = { ...emptyResumeContent(), ...body, personalInfo: { ...emptyResumeContent().personalInfo, ...body.personalInfo } } as ResumeContent;
       const out = await renderResumePdfDetailed(content, body.templateId, { fitToPage: body.fitToPage });
-      res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Cache-Control', 'no-store');
-      res.setHeader('X-Page-Count', String(out.pages));
-      res.setHeader('X-Fit-Scale', out.scale.toFixed(2));
-      res.setHeader('X-Fit-Spacing', out.spacing.toFixed(2));
-      res.setHeader('X-Fitted', String(out.fitted));
-      res.send(out.buffer);
+      res.json({
+        success: true,
+        data: {
+          pdf: out.buffer.toString('base64'),
+          pages: out.pages,
+          scale: Number(out.scale.toFixed(2)),
+          spacing: Number(out.spacing.toFixed(2)),
+          fitted: out.fitted,
+          boxes: out.boxes,
+        },
+      });
     },
 
     async export(req: Request, res: Response) {

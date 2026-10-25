@@ -8,10 +8,22 @@ const optText = (max: number) => z.string().trim().max(max).optional();
 const date = text(20);
 const list = (max: number, itemMax: number) => z.array(z.string().trim().max(itemMax)).max(max).default([]);
 
+// A dragged block may move anywhere on an A4 page (595 x 842 pt), so offsets stay within one page size.
+const offset = z.object({ x: z.number().finite().min(-600).max(600), y: z.number().finite().min(-850).max(850) });
+const layoutSchema = z.object({
+  contactIcons: z.enum(['none', 'inline', 'badges']).default('none'),
+  offsets: z
+    .record(z.string().regex(/^[a-z0-9-]{1,40}$/), offset)
+    .refine((o) => Object.keys(o).length <= 400, 'Too many positioned blocks')
+    .default({}),
+  sectionOrder: z.array(z.string().regex(/^[a-z0-9-]{1,30}$/)).max(30).default([]),
+});
+
 const resumeContentSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(120).optional(),
   templateId: z.enum(['classic', 'modern', 'compact', 'executive', 'minimal', 'bold']).optional(),
   fitToPage: z.boolean().optional(),
+  layout: layoutSchema.optional(),
   targetJobTitle: optText(150),
   personalInfo: z
     .object({

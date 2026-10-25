@@ -55,6 +55,12 @@ const resumeSchema = new Schema(
     templateId: { type: String, enum: ['classic', 'modern', 'compact', 'executive', 'minimal', 'bold'], default: 'classic' },
     /** Shrink type/spacing (within readable limits) so the export fits on one page. */
     fitToPage: { type: Boolean, default: false },
+    /** PDF-only: contact icons and dragged block offsets (validated by zod; Mixed because ids are map keys). */
+    layout: {
+      contactIcons: { type: String, enum: ['none', 'inline', 'badges'], default: 'none' },
+      offsets: { type: Schema.Types.Mixed, default: () => ({}) },
+      sectionOrder: { type: [String], default: [] },
+    },
     targetJobTitle: str(150),
     personalInfo: {
       fullName: str(120),
